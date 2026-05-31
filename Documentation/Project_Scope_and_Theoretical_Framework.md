@@ -1,6 +1,6 @@
 # Clinical Trial Randomization Engine: Scope and Theoretical Framework
 
-**Author:** Research Software Initiative  
+**Author:** Marcos Caballero 
 **Status:** Pre-Project Proposal & Documentation  
 **Target Language:** Python 3.x  
 
