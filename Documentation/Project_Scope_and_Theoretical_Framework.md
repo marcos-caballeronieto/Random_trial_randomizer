@@ -7,7 +7,7 @@
 ## 1. Project Scope & Objectives
 
 ### 1.1 Problem Statement
-In clinical research, the internal validity of an experiment relies heavily on the elimination of selection bias. Simple randomization—akin to flipping a coin for each participant—introduces severe risks of imbalance when dealing with small to moderate sample sizes. For instance, an unequal distribution of confounding variables such as age, biological sex, BMI, or baseline disease severity between the control and treatment arms can severely confound the treatment effect, leading to Type I or Type II errors. 
+In clinical research, the internal validity of an experiment relies heavily on the elimination of selection bias. Simple randomization—akin to flipping a coin for each participant—introduces severe risks of imbalance when dealing with small to moderate sample sizes. For instance, an unequal distribution of confounding variables such as age, biological sex, or baseline disease severity between the control and treatment arms can severely confound the treatment effect, leading to Type I or Type II errors. 
 
 To mitigate this, clinical trialists employ advanced allocation techniques. This project seeks to build a production-grade, reproducible, and verifiable **Stratified Permuted Block Randomization Engine** in Python. The tool will guarantee mathematical balance across critical covariates while preserving the strict unpredictability required for true allocation concealment.
 
