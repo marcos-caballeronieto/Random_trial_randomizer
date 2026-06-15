@@ -4,6 +4,7 @@ import numpy as np
 import io
 import os
 import altair as alt
+import textwrap
 from randomizer.ingestion import load_and_preprocess, generate_synthetic_data, validate_stratification_matrix
 from randomizer.core import run_randomization
 from randomizer.stats import verify_balance
@@ -624,20 +625,18 @@ def main():
                 if not report.get('continuous'):
                     st.write("*No continuous variables identified.*")
                 else:
-                    html_table = """
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Variable</th>
-                                <th>Mean (Treatment)</th>
-                                <th>Mean (Control)</th>
-                                <th>T-Statistic</th>
-                                <th>p-value</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                    """
+                    html_table = """<table class="custom-table">
+<thead>
+<tr>
+<th>Variable</th>
+<th>Mean (Treatment)</th>
+<th>Mean (Control)</th>
+<th>T-Statistic</th>
+<th>p-value</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>"""
                     for col, metrics in report['continuous'].items():
                         p_val = metrics['p_value']
                         p_str = f"{p_val:.4f}" if p_val is not None else "N/A"
@@ -652,16 +651,14 @@ def main():
                         else:
                             badge = '<span class="badge badge-danger">IMBALANCED</span>'
                             
-                        html_table += f"""
-                            <tr>
-                                <td><strong>{col}</strong></td>
-                                <td>{mean_t}</td>
-                                <td>{mean_c}</td>
-                                <td>{t_str}</td>
-                                <td>{p_str}</td>
-                                <td>{badge}</td>
-                            </tr>
-                        """
+                        html_table += f"""<tr>
+<td><strong>{col}</strong></td>
+<td>{mean_t}</td>
+<td>{mean_c}</td>
+<td>{t_str}</td>
+<td>{p_str}</td>
+<td>{badge}</td>
+</tr>"""
                     html_table += "</tbody></table>"
                     st.markdown(html_table, unsafe_allow_html=True)
                     
@@ -670,18 +667,16 @@ def main():
                 if not report.get('categorical'):
                     st.write("*No categorical variables identified.*")
                 else:
-                    html_table = """
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Variable</th>
-                                <th>Chi-Square Statistic</th>
-                                <th>p-value</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                    """
+                    html_table = """<table class="custom-table">
+<thead>
+<tr>
+<th>Variable</th>
+<th>Chi-Square Statistic</th>
+<th>p-value</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>"""
                     for col, metrics in report['categorical'].items():
                         p_val = metrics['p_value']
                         p_str = f"{p_val:.4f}" if p_val is not None else "N/A"
@@ -694,14 +689,12 @@ def main():
                         else:
                             badge = '<span class="badge badge-danger">IMBALANCED</span>'
                             
-                        html_table += f"""
-                            <tr>
-                                <td><strong>{col}</strong></td>
-                                <td>{chi_str}</td>
-                                <td>{p_str}</td>
-                                <td>{badge}</td>
-                            </tr>
-                        """
+                        html_table += f"""<tr>
+<td><strong>{col}</strong></td>
+<td>{chi_str}</td>
+<td>{p_str}</td>
+<td>{badge}</td>
+</tr>"""
                     html_table += "</tbody></table>"
                     st.markdown(html_table, unsafe_allow_html=True)
             
