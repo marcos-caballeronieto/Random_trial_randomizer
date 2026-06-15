@@ -51,7 +51,7 @@ def run_randomization(df: pd.DataFrame, strata_columns: list, block_size: int = 
     
     # 3. Construct composite key for stratification
     # E.g., 'Male_Middle Aged'
-    df_result['stratum_key'] = df_result[strata_columns].astype(str).agg('_'.join, axis=1)
+    df_result['stratum_key'] = df_result[strata_columns].apply(lambda row: '_'.join(map(str, row)), axis=1)
     
     # Cache the original order using a temporary index sequence
     df_result['original_order'] = np.arange(len(df_result))
