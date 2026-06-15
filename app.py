@@ -38,7 +38,7 @@ def get_svg_icon(name: str, color: str = "currentColor", size: int = 20) -> str:
 def heading_with_icon(icon_name: str, text: str, level: int = 3, color: str = "#0891B2"):
     svg = get_svg_icon(icon_name, color=color, size=24)
     st.markdown(f"""
-        <div style="display: flex; align-items: center; gap: 10px; margin-top: 20px; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px; margin-bottom: 15px;">
             <div style="display: flex; align-items: center; justify-content: center; color: {color};">{svg}</div>
             <h{level} style="margin: 0; color: {color} !important; font-family: 'Figtree', sans-serif;">{text}</h{level}>
         </div>
@@ -59,7 +59,7 @@ def custom_alert(icon_name: str, title: str, message: str, type: str = "info"):
             <div style="display: flex; align-items: center; justify-content: center; margin-top: 2px;">{svg}</div>
             <div>
                 <strong style="color: {text_color}; display: block; font-family: 'Figtree', sans-serif; font-size: 0.95rem; margin-bottom: 3px;">{title}</strong>
-                <span style="color: var(--text-color); opacity: 0.85; font-size: 0.9rem;">{message}</span>
+                <span style="color: #1e293b; font-size: 0.9rem; line-height: 1.5; display: inline-block;">{message}</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -106,25 +106,24 @@ def inject_custom_css():
             font-weight: 300;
         }
         
-        /* Cards */
-        .dashboard-card {
-            background-color: var(--background-color);
-            border: 1px solid rgba(128, 128, 128, 0.2);
-            background-image: linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02));
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            transition: border-color 200ms ease, box-shadow 200ms ease;
-            cursor: pointer;
+        /* Style Streamlit bordered containers directly as cards */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            background-color: var(--background-color) !important;
+            border: 1px solid rgba(128, 128, 128, 0.2) !important;
+            border-radius: 12px !important;
+            padding: 24px !important;
+            margin-bottom: 20px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+            transition: border-color 200ms ease, box-shadow 200ms ease !important;
+            cursor: pointer !important;
         }
         
-        .dashboard-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(8, 145, 178, 0.1);
-            border-color: #0891B2;
+        div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+            box-shadow: 0 10px 15px -3px rgba(8, 145, 178, 0.1) !important;
+            border-color: #0891B2 !important;
         }
         
-        .dashboard-card h3 {
+        div[data-testid="stVerticalBlockBorderWrapper"] h3 {
             margin-top: 0;
             margin-bottom: 15px;
             font-size: 1.3rem;
@@ -399,130 +398,126 @@ def main():
         col_summary1, col_summary2 = st.columns([1, 1])
         
         with col_summary1:
-            st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            heading_with_icon("database", "Cohort Dataset Profile", level=3)
-            st.write(f"**Total Records:** {len(df)} patients")
-            st.write(f"**Available Attributes:** {', '.join(df.columns.tolist())}")
-            st.dataframe(df.head(10), use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                heading_with_icon("database", "Cohort Dataset Profile", level=3)
+                st.write(f"**Total Records:** {len(df)} patients")
+                st.write(f"**Available Attributes:** {', '.join(df.columns.tolist())}")
+                st.dataframe(df.head(10), use_container_width=True)
             
         with col_summary2:
-            st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            heading_with_icon("shield", "Pre-Flight Strata Validation", level=3)
-            
-            if not strata_cols:
-                custom_alert("alert", "Stratifier Needed", "Please select at least one stratification variable to evaluate.", type="warning")
-            else:
-                total_patients = len(df)
-                unique_strata_combinations = df[strata_cols].drop_duplicates()
-                k_strata = len(unique_strata_combinations)
+            with st.container(border=True):
+                heading_with_icon("shield", "Pre-Flight Strata Validation", level=3)
                 
-                theoretical_k = 1
-                for col in strata_cols:
-                    theoretical_k *= df[col].nunique()
-                    
-                avg_patients_per_stratum = total_patients / k_strata if k_strata > 0 else 0
-                
-                st.write(f"**Selected Stratifiers:** {', '.join(strata_cols)}")
-                st.write(f"**Observed Active Strata (K):** {k_strata}")
-                st.write(f"**Theoretical Max Combinations:** {theoretical_k}")
-                st.write(f"**Configured Block Size (B):** {block_size}")
-                st.write(f"**Average Stratum Density:** `{avg_patients_per_stratum:.2f}` patients / stratum")
-                
-                st.markdown("#### Strata Density Evaluation:")
-                critical_threshold = block_size * 1.5
-                
-                is_safe = True
-                if avg_patients_per_stratum < block_size:
-                    st.markdown(
-                        f'<span class="badge badge-danger">CRITICAL WARNING</span> '
-                        f'Average density ({avg_patients_per_stratum:.2f}) is lower than the block size ({block_size}).',
-                        unsafe_allow_html=True
-                    )
-                    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-                    custom_alert(
-                        "alert",
-                        "Strata Starvation Risk",
-                        "There are too few patients per stratum combination. Randomization will degrade to simple random allocation. It is highly recommended to reduce the number of stratification variables or expand your cohort.",
-                        type="danger"
-                    )
-                    is_safe = False
-                elif avg_patients_per_stratum < critical_threshold:
-                    st.markdown(
-                        f'<span class="badge badge-warning">BORDERLINE DENSITY</span> '
-                        f'Density ({avg_patients_per_stratum:.2f}) is close to minimum limits.',
-                        unsafe_allow_html=True
-                    )
-                    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-                    custom_alert(
-                        "alert",
-                        "Borderline Density",
-                        "Incomplete blocks at recruitment closure might cause minor imbalances in rare strata. Proceed with caution.",
-                        type="warning"
-                    )
+                if not strata_cols:
+                    custom_alert("alert", "Stratifier Needed", "Please select at least one stratification variable to evaluate.", type="warning")
                 else:
-                    st.markdown(
-                        f'<span class="badge badge-success">VALIDATION SUCCESSFUL</span> '
-                        f'Density ({avg_patients_per_stratum:.2f}) is robust.',
-                        unsafe_allow_html=True
-                    )
-                    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-                    custom_alert(
-                        "check",
-                        "Validation Successful",
-                        "Stratification matrix is structurally sound and balanced.",
-                        type="success"
-                    )
-            st.markdown('</div>', unsafe_allow_html=True)
+                    total_patients = len(df)
+                    unique_strata_combinations = df[strata_cols].drop_duplicates()
+                    k_strata = len(unique_strata_combinations)
+                    
+                    theoretical_k = 1
+                    for col in strata_cols:
+                        theoretical_k *= df[col].nunique()
+                        
+                    avg_patients_per_stratum = total_patients / k_strata if k_strata > 0 else 0
+                    
+                    st.write(f"**Selected Stratifiers:** {', '.join(strata_cols)}")
+                    st.write(f"**Observed Active Strata (K):** {k_strata}")
+                    st.write(f"**Theoretical Max Combinations:** {theoretical_k}")
+                    st.write(f"**Configured Block Size (B):** {block_size}")
+                    st.write(f"**Average Stratum Density:** `{avg_patients_per_stratum:.2f}` patients / stratum")
+                    
+                    st.markdown("#### Strata Density Evaluation:")
+                    critical_threshold = block_size * 1.5
+                    
+                    is_safe = True
+                    if avg_patients_per_stratum < block_size:
+                        st.markdown(
+                            f'<span class="badge badge-danger">CRITICAL WARNING</span> '
+                            f'Average density ({avg_patients_per_stratum:.2f}) is lower than the block size ({block_size}).',
+                            unsafe_allow_html=True
+                        )
+                        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                        custom_alert(
+                            "alert",
+                            "Strata Starvation Risk",
+                            "There are too few patients per stratum combination. Randomization will degrade to simple random allocation. It is highly recommended to reduce the number of stratification variables or expand your cohort.",
+                            type="danger"
+                        )
+                        is_safe = False
+                    elif avg_patients_per_stratum < critical_threshold:
+                        st.markdown(
+                            f'<span class="badge badge-warning">BORDERLINE DENSITY</span> '
+                            f'Density ({avg_patients_per_stratum:.2f}) is close to minimum limits.',
+                            unsafe_allow_html=True
+                        )
+                        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                        custom_alert(
+                            "alert",
+                            "Borderline Density",
+                            "Incomplete blocks at recruitment closure might cause minor imbalances in rare strata. Proceed with caution.",
+                            type="warning"
+                        )
+                    else:
+                        st.markdown(
+                            f'<span class="badge badge-success">VALIDATION SUCCESSFUL</span> '
+                            f'Density ({avg_patients_per_stratum:.2f}) is robust.',
+                            unsafe_allow_html=True
+                        )
+                        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                        custom_alert(
+                            "check",
+                            "Validation Successful",
+                            "Stratification matrix is structurally sound and balanced.",
+                            type="success"
+                        )
             
     # Tab 2: Randomization Assignment
     with tab_allocation:
-        st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-        heading_with_icon("settings", "Execute Randomization", level=3)
-        st.write("Clicking below will partition the cohort using stratified permuted block randomization.")
-        
-        run_allowed = True
-        if strata_cols:
-            avg_patients_per_stratum = len(df) / len(df[strata_cols].drop_duplicates())
-            if avg_patients_per_stratum < block_size and not force_randomization:
-                run_allowed = False
-                custom_alert(
-                    "info", 
-                    "Randomization Locked", 
-                    "Randomization is locked due to Strata Starvation risks. Use the sidebar bypass check to proceed.", 
-                    type="info"
-                )
-                
-        run_btn = st.button("Run Randomization Allocation", disabled=not run_allowed or not strata_cols, type="primary")
-        
-        if run_btn:
-            with st.spinner("Executing sequence allocation..."):
-                try:
-                    df_randomized = run_randomization(
-                        df=df,
-                        strata_columns=strata_cols,
-                        block_size=block_size,
-                        seed=seed
-                    )
-                    st.session_state.df_randomized = df_randomized
-                    st.session_state.last_randomization_params = {
-                        'strata': strata_cols,
-                        'block_size': block_size,
-                        'seed': seed,
-                        'salt': salt
-                    }
-                    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            heading_with_icon("settings", "Execute Randomization", level=3)
+            st.write("Clicking below will partition the cohort using stratified permuted block randomization.")
+            
+            run_allowed = True
+            if strata_cols:
+                avg_patients_per_stratum = len(df) / len(df[strata_cols].drop_duplicates())
+                if avg_patients_per_stratum < block_size and not force_randomization:
+                    run_allowed = False
                     custom_alert(
-                        "check", 
-                        "Randomization Completed", 
-                        "Randomization sequence completed successfully. Visual summary reports and download files are now available below.", 
-                        type="success"
+                        "info", 
+                        "Randomization Locked", 
+                        "Randomization is locked due to Strata Starvation risks. Use the sidebar bypass check to proceed.", 
+                        type="info"
                     )
-                except Exception as e:
-                    st.error(f"Randomization error: {e}")
                     
-        st.markdown('</div>', unsafe_allow_html=True)
-        
+            run_btn = st.button("Run Randomization Allocation", disabled=not run_allowed or not strata_cols, type="primary")
+            
+            if run_btn:
+                with st.spinner("Executing sequence allocation..."):
+                    try:
+                        df_randomized = run_randomization(
+                            df=df,
+                            strata_columns=strata_cols,
+                            block_size=block_size,
+                            seed=seed
+                        )
+                        st.session_state.df_randomized = df_randomized
+                        st.session_state.last_randomization_params = {
+                            'strata': strata_cols,
+                            'block_size': block_size,
+                            'seed': seed,
+                            'salt': salt
+                        }
+                        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                        custom_alert(
+                            "check", 
+                            "Randomization Completed", 
+                            "Randomization sequence completed successfully. Visual summary reports and download files are now available below.", 
+                            type="success"
+                        )
+                    except Exception as e:
+                        st.error(f"Randomization error: {e}")
+            
         # Display results and downloads if generated
         if st.session_state.df_randomized is not None:
             df_rand = st.session_state.df_randomized
@@ -563,28 +558,27 @@ def main():
                 )
                 st.caption("Contains all raw data, stratum composite keys, raw allocations ('C'/'T'), and masked tokens for audit reproducibility.")
                 
-            st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            heading_with_icon("chart", "Allocation Summary Metrics", level=3)
-            
-            # Show summary stats of the allocation
-            n_tot = len(df_rand)
-            n_treat = len(df_rand[df_rand['Allocation'] == 'T'])
-            n_ctrl = len(df_rand[df_rand['Allocation'] == 'C'])
-            bal_ratio = (n_treat / n_ctrl) if n_ctrl > 0 else 0
-            
-            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-            with col_m1:
-                st.markdown(f'**Allocated Cohort (N)**<br><span class="metric-value">{n_tot}</span>', unsafe_allow_html=True)
-            with col_m2:
-                st.markdown(f'**Treatment Arm (T)**<br><span class="metric-value">{n_treat}</span>', unsafe_allow_html=True)
-            with col_m3:
-                st.markdown(f'**Control Arm (C)**<br><span class="metric-value">{n_ctrl}</span>', unsafe_allow_html=True)
-            with col_m4:
-                st.markdown(f'**Balance Ratio (T/C)**<br><span class="metric-value">{bal_ratio:.3f}</span>', unsafe_allow_html=True)
+            with st.container(border=True):
+                heading_with_icon("chart", "Allocation Summary Metrics", level=3)
                 
-            heading_with_icon("table", "Randomized Dataset Preview", level=3)
-            st.dataframe(df_export.head(15), use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+                # Show summary stats of the allocation
+                n_tot = len(df_rand)
+                n_treat = len(df_rand[df_rand['Allocation'] == 'T'])
+                n_ctrl = len(df_rand[df_rand['Allocation'] == 'C'])
+                bal_ratio = (n_treat / n_ctrl) if n_ctrl > 0 else 0
+                
+                col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+                with col_m1:
+                    st.markdown(f'**Allocated Cohort (N)**<br><span class="metric-value">{n_tot}</span>', unsafe_allow_html=True)
+                with col_m2:
+                    st.markdown(f'**Treatment Arm (T)**<br><span class="metric-value">{n_treat}</span>', unsafe_allow_html=True)
+                with col_m3:
+                    st.markdown(f'**Control Arm (C)**<br><span class="metric-value">{n_ctrl}</span>', unsafe_allow_html=True)
+                with col_m4:
+                    st.markdown(f'**Balance Ratio (T/C)**<br><span class="metric-value">{bal_ratio:.3f}</span>', unsafe_allow_html=True)
+                    
+                heading_with_icon("table", "Randomized Dataset Preview", level=3)
+                st.dataframe(df_export.head(15), use_container_width=True)
             
     # Tab 3: Statistical Balance Audit
     with tab_audit:
@@ -593,119 +587,117 @@ def main():
         else:
             df_rand = st.session_state.df_randomized
             
-            st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            heading_with_icon("chart", "Statistical Verification Parity Report", level=3)
-            st.write(
-                "Welch's Independent T-Test is performed on continuous variables, and Pearson's Chi-Square Test "
-                "is conducted on categorical covariates to verify balance. A p-value > 0.05 indicates no statistically "
-                "significant difference between the Control and Treatment groups (i.e. successful balance)."
-            )
-            
-            continuous_candidates = ['Age', 'BMI']
-            categorical_candidates = ['Sex', 'Smoking', 'Obesity', 'Diabetes', 'Cancer', 'Cancer_Stage']
-            
-            continuous_cols = [c for c in continuous_candidates if c in df_rand.columns]
-            categorical_cols = [c for c in categorical_candidates if c in df_rand.columns]
-            
-            if not continuous_cols and not categorical_cols:
-                for col in df_rand.columns:
-                    if col in ['Patient_ID', 'Allocation', 'stratum_key', 'Masked_Allocation_Token']:
-                        continue
-                    if pd.api.types.is_numeric_dtype(df_rand[col]) and df_rand[col].nunique() > 10:
-                        continuous_cols.append(col)
-                    else:
-                        categorical_cols.append(col)
-            
-            # Run test
-            report = verify_balance(df_rand, continuous_cols, categorical_cols)
-            
-            # Render continuous table
-            heading_with_icon("table", "Continuous Covariates (Welch's Independent T-Test)", level=4)
-            if not report.get('continuous'):
-                st.write("*No continuous variables identified.*")
-            else:
-                html_table = """
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th>Variable</th>
-                            <th>Mean (Treatment)</th>
-                            <th>Mean (Control)</th>
-                            <th>T-Statistic</th>
-                            <th>p-value</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                """
-                for col, metrics in report['continuous'].items():
-                    p_val = metrics['p_value']
-                    p_str = f"{p_val:.4f}" if p_val is not None else "N/A"
-                    t_str = f"{metrics['t_statistic']:.4f}" if metrics['t_statistic'] is not None else "N/A"
-                    mean_t = f"{metrics['mean_treatment']:.2f}" if metrics['mean_treatment'] is not None else "N/A"
-                    mean_c = f"{metrics['mean_control']:.2f}" if metrics['mean_control'] is not None else "N/A"
-                    
-                    if p_val is None:
-                        badge = '<span class="badge badge-warning">N/A</span>'
-                    elif p_val > 0.05:
-                        badge = '<span class="badge badge-success">BALANCED</span>'
-                    else:
-                        badge = '<span class="badge badge-danger">IMBALANCED</span>'
-                        
-                    html_table += f"""
-                        <tr>
-                            <td><strong>{col}</strong></td>
-                            <td>{mean_t}</td>
-                            <td>{mean_c}</td>
-                            <td>{t_str}</td>
-                            <td>{p_str}</td>
-                            <td>{badge}</td>
-                        </tr>
-                    """
-                html_table += "</tbody></table>"
-                st.markdown(html_table, unsafe_allow_html=True)
+            with st.container(border=True):
+                heading_with_icon("chart", "Statistical Verification Parity Report", level=3)
+                st.write(
+                    "Welch's Independent T-Test is performed on continuous variables, and Pearson's Chi-Square Test "
+                    "is conducted on categorical covariates to verify balance. A p-value > 0.05 indicates no statistically "
+                    "significant difference between the Control and Treatment groups (i.e. successful balance)."
+                )
                 
-            # Render categorical table
-            heading_with_icon("table", "Categorical Covariates (Pearson's Chi-Square Test)", level=4)
-            if not report.get('categorical'):
-                st.write("*No categorical variables identified.*")
-            else:
-                html_table = """
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th>Variable</th>
-                            <th>Chi-Square Statistic</th>
-                            <th>p-value</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                """
-                for col, metrics in report['categorical'].items():
-                    p_val = metrics['p_value']
-                    p_str = f"{p_val:.4f}" if p_val is not None else "N/A"
-                    chi_str = f"{metrics['chi2_statistic']:.4f}" if metrics['chi2_statistic'] is not None else "N/A"
-                    
-                    if p_val is None:
-                        badge = '<span class="badge badge-warning">N/A</span>'
-                    elif p_val > 0.05:
-                        badge = '<span class="badge badge-success">BALANCED</span>'
-                    else:
-                        badge = '<span class="badge badge-danger">IMBALANCED</span>'
-                        
-                    html_table += f"""
-                        <tr>
-                            <td><strong>{col}</strong></td>
-                            <td>{chi_str}</td>
-                            <td>{p_str}</td>
-                            <td>{badge}</td>
-                        </tr>
-                    """
-                html_table += "</tbody></table>"
-                st.markdown(html_table, unsafe_allow_html=True)
+                continuous_candidates = ['Age', 'BMI']
+                categorical_candidates = ['Sex', 'Smoking', 'Obesity', 'Diabetes', 'Cancer', 'Cancer_Stage']
                 
-            st.markdown('</div>', unsafe_allow_html=True)
+                continuous_cols = [c for c in continuous_candidates if c in df_rand.columns]
+                categorical_cols = [c for c in categorical_candidates if c in df_rand.columns]
+                
+                if not continuous_cols and not categorical_cols:
+                    for col in df_rand.columns:
+                        if col in ['Patient_ID', 'Allocation', 'stratum_key', 'Masked_Allocation_Token']:
+                            continue
+                        if pd.api.types.is_numeric_dtype(df_rand[col]) and df_rand[col].nunique() > 10:
+                            continuous_cols.append(col)
+                        else:
+                            categorical_cols.append(col)
+                
+                # Run test
+                report = verify_balance(df_rand, continuous_cols, categorical_cols)
+                
+                # Render continuous table
+                heading_with_icon("table", "Continuous Covariates (Welch's Independent T-Test)", level=4)
+                if not report.get('continuous'):
+                    st.write("*No continuous variables identified.*")
+                else:
+                    html_table = """
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Mean (Treatment)</th>
+                                <th>Mean (Control)</th>
+                                <th>T-Statistic</th>
+                                <th>p-value</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    """
+                    for col, metrics in report['continuous'].items():
+                        p_val = metrics['p_value']
+                        p_str = f"{p_val:.4f}" if p_val is not None else "N/A"
+                        t_str = f"{metrics['t_statistic']:.4f}" if metrics['t_statistic'] is not None else "N/A"
+                        mean_t = f"{metrics['mean_treatment']:.2f}" if metrics['mean_treatment'] is not None else "N/A"
+                        mean_c = f"{metrics['mean_control']:.2f}" if metrics['mean_control'] is not None else "N/A"
+                        
+                        if p_val is None:
+                            badge = '<span class="badge badge-warning">N/A</span>'
+                        elif p_val > 0.05:
+                            badge = '<span class="badge badge-success">BALANCED</span>'
+                        else:
+                            badge = '<span class="badge badge-danger">IMBALANCED</span>'
+                            
+                        html_table += f"""
+                            <tr>
+                                <td><strong>{col}</strong></td>
+                                <td>{mean_t}</td>
+                                <td>{mean_c}</td>
+                                <td>{t_str}</td>
+                                <td>{p_str}</td>
+                                <td>{badge}</td>
+                            </tr>
+                        """
+                    html_table += "</tbody></table>"
+                    st.markdown(html_table, unsafe_allow_html=True)
+                    
+                # Render categorical table
+                heading_with_icon("table", "Categorical Covariates (Pearson's Chi-Square Test)", level=4)
+                if not report.get('categorical'):
+                    st.write("*No categorical variables identified.*")
+                else:
+                    html_table = """
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Chi-Square Statistic</th>
+                                <th>p-value</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    """
+                    for col, metrics in report['categorical'].items():
+                        p_val = metrics['p_value']
+                        p_str = f"{p_val:.4f}" if p_val is not None else "N/A"
+                        chi_str = f"{metrics['chi2_statistic']:.4f}" if metrics['chi2_statistic'] is not None else "N/A"
+                        
+                        if p_val is None:
+                            badge = '<span class="badge badge-warning">N/A</span>'
+                        elif p_val > 0.05:
+                            badge = '<span class="badge badge-success">BALANCED</span>'
+                        else:
+                            badge = '<span class="badge badge-danger">IMBALANCED</span>'
+                            
+                        html_table += f"""
+                            <tr>
+                                <td><strong>{col}</strong></td>
+                                <td>{chi_str}</td>
+                                <td>{p_str}</td>
+                                <td>{badge}</td>
+                            </tr>
+                        """
+                    html_table += "</tbody></table>"
+                    st.markdown(html_table, unsafe_allow_html=True)
             
     # Tab 4: Visualizations
     with tab_viz:
@@ -714,57 +706,55 @@ def main():
         else:
             df_rand = st.session_state.df_randomized
             
-            st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            heading_with_icon("chart", "Distribution of Covariates by Allocation Arm", level=3)
-            
-            plottable_cols = [c for c in df_rand.columns if c not in ['Patient_ID', 'Allocation', 'stratum_key', 'Masked_Allocation_Token']]
-            
-            selected_var = st.selectbox(
-                "Select a variable to inspect:",
-                options=plottable_cols
-            )
-            
-            if selected_var:
-                if pd.api.types.is_numeric_dtype(df_rand[selected_var]) and df_rand[selected_var].nunique() > 10:
-                    heading_with_icon("chart", f"Boxplot of {selected_var} per Treatment Arm", level=4)
-                    
-                    boxplot = alt.Chart(df_rand).mark_boxplot(extent='min-max', size=50).encode(
-                        x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
-                        y=alt.Y(f'{selected_var}:Q', title=selected_var),
-                        color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm')
-                    ).properties(
-                        width=350,
-                        height=400
-                    ).configure_view(
-                        stroke='transparent'
-                    )
-                    
-                    st.altair_chart(boxplot, use_container_width=False)
-                    
-                else:
-                    heading_with_icon("chart", f"Distribution of {selected_var} per Treatment Arm", level=4)
-                    
-                    chart_data = df_rand.groupby([selected_var, 'Allocation']).size().reset_index(name='Count')
-                    total_by_allocation = df_rand.groupby('Allocation').size().to_dict()
-                    chart_data['Percentage'] = chart_data.apply(
-                        lambda row: (row['Count'] / total_by_allocation[row['Allocation']]) * 100, axis=1
-                    )
-                    
-                    bar_chart = alt.Chart(chart_data).mark_bar().encode(
-                        x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
-                        y=alt.Y('Percentage:Q', title='Percentage (%)'),
-                        color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm'),
-                        column=alt.Column(f'{selected_var}:N', title=selected_var)
-                    ).properties(
-                        width=120,
-                        height=350
-                    ).configure_view(
-                        stroke='transparent'
-                    )
-                    
-                    st.altair_chart(bar_chart, use_container_width=True)
-                    
-            st.markdown('</div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                heading_with_icon("chart", "Distribution of Covariates by Allocation Arm", level=3)
+                
+                plottable_cols = [c for c in df_rand.columns if c not in ['Patient_ID', 'Allocation', 'stratum_key', 'Masked_Allocation_Token']]
+                
+                selected_var = st.selectbox(
+                    "Select a variable to inspect:",
+                    options=plottable_cols
+                )
+                
+                if selected_var:
+                    if pd.api.types.is_numeric_dtype(df_rand[selected_var]) and df_rand[selected_var].nunique() > 10:
+                        heading_with_icon("chart", f"Boxplot of {selected_var} per Treatment Arm", level=4)
+                        
+                        boxplot = alt.Chart(df_rand).mark_boxplot(extent='min-max', size=50).encode(
+                            x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
+                            y=alt.Y(f'{selected_var}:Q', title=selected_var),
+                            color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm')
+                        ).properties(
+                            width=350,
+                            height=400
+                        ).configure_view(
+                            stroke='transparent'
+                        )
+                        
+                        st.altair_chart(boxplot, use_container_width=False)
+                        
+                    else:
+                        heading_with_icon("chart", f"Distribution of {selected_var} per Treatment Arm", level=4)
+                        
+                        chart_data = df_rand.groupby([selected_var, 'Allocation']).size().reset_index(name='Count')
+                        total_by_allocation = df_rand.groupby('Allocation').size().to_dict()
+                        chart_data['Percentage'] = chart_data.apply(
+                            lambda row: (row['Count'] / total_by_allocation[row['Allocation']]) * 100, axis=1
+                        )
+                        
+                        bar_chart = alt.Chart(chart_data).mark_bar().encode(
+                            x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
+                            y=alt.Y('Percentage:Q', title='Percentage (%)'),
+                            color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm'),
+                            column=alt.Column(f'{selected_var}:N', title=selected_var)
+                        ).properties(
+                            width=120,
+                            height=350
+                        ).configure_view(
+                            stroke='transparent'
+                        )
+                        
+                        st.altair_chart(bar_chart, use_container_width=True)
 
 if __name__ == "__main__":
     main()
