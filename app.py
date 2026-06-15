@@ -141,17 +141,22 @@ def inject_custom_css():
         }
         
         .custom-table th {
-            background-color: rgba(8, 145, 178, 0.1);
-            color: #164E63;
+            background-color: rgba(8, 145, 178, 0.15) !important;
+            color: var(--text-color) !important;
             text-align: left;
             padding: 12px 15px;
-            font-weight: 600;
-            border-bottom: 2px solid rgba(8, 145, 178, 0.2);
+            font-weight: 700;
+            border-bottom: 2px solid #0891B2 !important;
+        }
+        
+        .custom-table tr:nth-child(even) {
+            background-color: rgba(128, 128, 128, 0.04) !important;
         }
         
         .custom-table td {
             padding: 12px 15px;
-            border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+            border-bottom: 1px solid rgba(128, 128, 128, 0.15) !important;
+            color: var(--text-color) !important;
         }
         
         /* Badges */
@@ -724,13 +729,10 @@ def main():
                             y=alt.Y(f'{selected_var}:Q', title=selected_var),
                             color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm')
                         ).properties(
-                            width=350,
                             height=400
-                        ).configure_view(
-                            stroke='transparent'
                         )
                         
-                        st.altair_chart(boxplot, use_container_width=False)
+                        st.altair_chart(boxplot, use_container_width=True)
                         
                     else:
                         heading_with_icon("chart", f"Distribution of {selected_var} per Treatment Arm", level=4)
@@ -742,15 +744,12 @@ def main():
                         )
                         
                         bar_chart = alt.Chart(chart_data).mark_bar().encode(
-                            x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
+                            x=alt.X(f'{selected_var}:N', title=selected_var, axis=alt.Axis(labelAngle=0)),
                             y=alt.Y('Percentage:Q', title='Percentage (%)'),
-                            color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm'),
-                            column=alt.Column(f'{selected_var}:N', title=selected_var)
+                            xOffset='Allocation:N',
+                            color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm')
                         ).properties(
-                            width=120,
-                            height=350
-                        ).configure_view(
-                            stroke='transparent'
+                            height=380
                         )
                         
                         st.altair_chart(bar_chart, use_container_width=True)
