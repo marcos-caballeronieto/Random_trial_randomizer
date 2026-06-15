@@ -211,6 +211,12 @@ def inject_custom_css():
             outline-offset: 2px !important;
         }
         
+        /* Remove vertical focus outlines specifically for Streamlit tabs */
+        button[role="tab"], div[data-baseweb="tab"], button[data-baseweb="tab"], div[role="tab"] {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
         /* Input overrides */
         .stTextInput>div>div>input, .stNumberInput>div>div>input {
             border: 1px solid rgba(128,128,128,0.2) !important;
