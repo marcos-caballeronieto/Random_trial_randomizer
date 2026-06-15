@@ -65,6 +65,18 @@ def custom_alert(icon_name: str, title: str, message: str, type: str = "info"):
         </div>
     """, unsafe_allow_html=True)
 
+# Hide text cursor in dropdown
+    st.markdown(
+        """
+        <style>
+        div[data-baseweb="select"] input {
+            caret-color: transparent;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+        )
+
 # Custom CSS Injector (incorporating accessible colors, custom fonts, borders and outlines)
 def inject_custom_css():
     st.markdown("""
@@ -223,6 +235,29 @@ def inject_custom_css():
             box-shadow: none !important;
         }
         
+        /* Force cursor pointer on selectboxes, dropdowns, and option lists */
+        div[data-baseweb="select"], 
+        div[data-baseweb="select"] *,
+        div[role="combobox"],
+        div[role="combobox"] *,
+        input[role="combobox"],
+        ul[role="listbox"] li,
+        ul[role="listbox"] li * {
+            cursor: pointer !important;
+            caret-color: transparent !important;
+        }
+
+        /* HIDE THE BLINKING TEXT CURSOR */
+        div[data-baseweb="select"] input {
+            caret-color: transparent !important;
+        }
+
+        /* REMOVE THE BLUE FOCUS OUTLINE FROM THE INVISIBLE INPUT */
+        div[data-baseweb="select"] input:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
         /* Input overrides */
         .stTextInput>div>div>input, .stNumberInput>div>div>input {
             border: 1px solid rgba(128,128,128,0.2) !important;
@@ -364,7 +399,8 @@ def main():
     strata_cols = st.sidebar.multiselect(
         "Stratification Covariates:",
         options=potential_strata,
-        default=default_selected
+        default=default_selected,
+        format_func=lambda x: x.replace('_', ' ')
     )
     
     block_size = st.sidebar.slider(
@@ -656,8 +692,9 @@ def main():
                         else:
                             badge = '<span class="badge badge-danger">IMBALANCED</span>'
                             
+                        formatted_name = col.replace('_', ' ')
                         html_table += f"""<tr>
-<td><strong>{col}</strong></td>
+<td><strong>{formatted_name}</strong></td>
 <td>{mean_t}</td>
 <td>{mean_c}</td>
 <td>{t_str}</td>
@@ -694,8 +731,9 @@ def main():
                         else:
                             badge = '<span class="badge badge-danger">IMBALANCED</span>'
                             
+                        formatted_name = col.replace('_', ' ')
                         html_table += f"""<tr>
-<td><strong>{col}</strong></td>
+<td><strong>{formatted_name}</strong></td>
 <td>{chi_str}</td>
 <td>{p_str}</td>
 <td>{badge}</td>
@@ -717,16 +755,18 @@ def main():
                 
                 selected_var = st.selectbox(
                     "Select a variable to inspect:",
-                    options=plottable_cols
+                    options=plottable_cols,
+                    format_func=lambda x: x.replace('_', ' ')
                 )
                 
                 if selected_var:
+                    formatted_var = selected_var.replace('_', ' ')
                     if pd.api.types.is_numeric_dtype(df_rand[selected_var]) and df_rand[selected_var].nunique() > 10:
-                        heading_with_icon("chart", f"Boxplot of {selected_var} per Treatment Arm", level=4)
+                        heading_with_icon("chart", f"Boxplot of {formatted_var} per Treatment Arm", level=4)
                         
                         boxplot = alt.Chart(df_rand).mark_boxplot(extent='min-max', size=50).encode(
                             x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
-                            y=alt.Y(f'{selected_var}:Q', title=selected_var),
+                            y=alt.Y(f'{selected_var}:Q', title=formatted_var),
                             color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm')
                         ).properties(
                             height=400
@@ -735,7 +775,7 @@ def main():
                         st.altair_chart(boxplot, use_container_width=True)
                         
                     else:
-                        heading_with_icon("chart", f"Distribution of {selected_var} per Treatment Arm", level=4)
+                        heading_with_icon("chart", f"Distribution of {formatted_var} per Treatment Arm", level=4)
                         
                         chart_data = df_rand.groupby([selected_var, 'Allocation']).size().reset_index(name='Count')
                         total_by_allocation = df_rand.groupby('Allocation').size().to_dict()
@@ -744,7 +784,7 @@ def main():
                         )
                         
                         bar_chart = alt.Chart(chart_data).mark_bar().encode(
-                            x=alt.X(f'{selected_var}:N', title=selected_var, axis=alt.Axis(labelAngle=0)),
+                            x=alt.X(f'{selected_var}:N', title=formatted_var, axis=alt.Axis(labelAngle=0)),
                             y=alt.Y('Percentage:Q', title='Percentage (%)'),
                             xOffset='Allocation:N',
                             color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm')
