@@ -11,38 +11,85 @@ from randomizer.export import generate_allocation_token
 
 # Configure streamlit page
 st.set_page_config(
-    page_title="Clinical Trial Randomization Engine",
+    page_title="Clinical Trial Randomizer",
     page_icon="🧬",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for premium design (responsive to both dark and light themes)
+# Custom SVG Icons Lookup
+def get_svg_icon(name: str, color: str = "currentColor", size: int = 20) -> str:
+    icons = {
+        "dna": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10.5C4.5 5.25 9 3 9 3s4.5 2.25 4.5 7.5S9 18 9 18s-4.5-2.25-4.5-7.5Z"/><path d="M19.5 13.5c0 5.25-4.5 7.5-4.5 7.5s-4.5-2.25-4.5-7.5 4.5-7.5 4.5-7.5 4.5 2.25 4.5 7.5Z"/><path d="m14.5 6.5-5.5 3"/><path d="m14 10.5-4 2"/><path d="m15 14.5-5.5 3"/></svg>',
+        "database": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>',
+        "shield": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 9.7a1 1 0 0 1-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .76-.97l8-2a1 1 0 0 1 .48 0l8 2A1 1 0 0 1 20 6v7z"/><path d="m9 12 2 2 4-4"/></svg>',
+        "play": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>',
+        "settings": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+        "chart": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>',
+        "table": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg>',
+        "download": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+        "info": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+        "check": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        "alert": f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>'
+    }
+    return icons.get(name, "")
+
+# Header helper function
+def heading_with_icon(icon_name: str, text: str, level: int = 3, color: str = "#0891B2"):
+    svg = get_svg_icon(icon_name, color=color, size=24)
+    st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 20px; margin-bottom: 15px;">
+            <div style="display: flex; align-items: center; justify-content: center; color: {color};">{svg}</div>
+            <h{level} style="margin: 0; color: {color} !important; font-family: 'Figtree', sans-serif;">{text}</h{level}>
+        </div>
+    """, unsafe_allow_html=True)
+
+# Custom premium alerts to avoid using basic emojis
+def custom_alert(icon_name: str, title: str, message: str, type: str = "info"):
+    colors = {
+        "info": ("#ECFEFF", "#0891B2", "info"),
+        "success": ("#F0FDF4", "#059669", "check"),
+        "warning": ("#FFFBEB", "#D97706", "alert"),
+        "danger": ("#FEF2F2", "#DC2626", "alert")
+    }
+    bg, text_color, icon = colors.get(type, colors["info"])
+    svg = get_svg_icon(icon, color=text_color, size=20)
+    st.markdown(f"""
+        <div style="background-color: {bg}; border: 1px solid rgba(128,128,128,0.15); border-left: 4px solid {text_color}; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-start;">
+            <div style="display: flex; align-items: center; justify-content: center; margin-top: 2px;">{svg}</div>
+            <div>
+                <strong style="color: {text_color}; display: block; font-family: 'Figtree', sans-serif; font-size: 0.95rem; margin-bottom: 3px;">{title}</strong>
+                <span style="color: var(--text-color); opacity: 0.85; font-size: 0.9rem;">{message}</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+# Custom CSS Injector (incorporating accessible colors, custom fonts, borders and outlines)
 def inject_custom_css():
     st.markdown("""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&family=Noto+Sans:wght@300;400;500;700&display=swap');
         
         /* Apply fonts */
         html, body, [class*="css"], .stMarkdown {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Noto Sans', sans-serif;
         }
         
         h1, h2, h3, h4, h5, h6 {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Figtree', sans-serif;
             font-weight: 700 !important;
             letter-spacing: -0.02em;
         }
         
-        /* Premium Header */
+        /* Premium Medical Dashboard Header */
         .main-header {
-            background: linear-gradient(135deg, #4f46e5 0%, #0d9488 100%);
+            background: linear-gradient(135deg, #0891B2 0%, #059669 100%);
             padding: 35px 25px;
             border-radius: 16px;
             color: white;
             text-align: center;
             margin-bottom: 30px;
-            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.15), 0 8px 10px -6px rgba(13, 148, 136, 0.1);
+            box-shadow: 0 10px 25px -5px rgba(8, 145, 178, 0.15), 0 8px 10px -6px rgba(5, 150, 105, 0.1);
         }
         
         .main-header h1 {
@@ -67,7 +114,14 @@ def inject_custom_css():
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: border-color 200ms ease, box-shadow 200ms ease;
+            cursor: pointer;
+        }
+        
+        .dashboard-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(8, 145, 178, 0.1);
+            border-color: #0891B2;
         }
         
         .dashboard-card h3 {
@@ -87,15 +141,16 @@ def inject_custom_css():
         }
         
         .custom-table th {
-            background-color: rgba(128, 128, 128, 0.1);
+            background-color: rgba(8, 145, 178, 0.1);
+            color: #164E63;
             text-align: left;
-            padding: 10px 15px;
+            padding: 12px 15px;
             font-weight: 600;
-            border-bottom: 2px solid rgba(128, 128, 128, 0.2);
+            border-bottom: 2px solid rgba(8, 145, 178, 0.2);
         }
         
         .custom-table td {
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-bottom: 1px solid rgba(128, 128, 128, 0.1);
         }
         
@@ -126,16 +181,65 @@ def inject_custom_css():
             color: #f59e0b;
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
+        
+        /* Custom Button Override (CTA Accent Health Green) */
+        div.stButton > button:first-child {
+            background-color: #059669 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 12px 24px !important;
+            font-weight: 600 !important;
+            font-family: 'Figtree', sans-serif !important;
+            transition: all 200ms ease !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2) !important;
+        }
+        
+        div.stButton > button:first-child:hover {
+            opacity: 0.9 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3) !important;
+        }
+        
+        div.stButton > button:first-child:active {
+            transform: translateY(0px) !important;
+        }
+        
+        /* Accessible Focus Outlines */
+        a:focus, button:focus, input:focus, select:focus, div[role="button"]:focus {
+            outline: 3px solid rgba(8, 145, 178, 0.4) !important;
+            outline-offset: 2px !important;
+        }
+        
+        /* Input overrides */
+        .stTextInput>div>div>input, .stNumberInput>div>div>input {
+            border: 1px solid rgba(128,128,128,0.2) !important;
+            border-radius: 8px !important;
+            transition: border-color 200ms ease, box-shadow 200ms ease !important;
+        }
+        .stTextInput>div>div>input:focus, .stNumberInput>div>div>input:focus {
+            border-color: #0891B2 !important;
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2) !important;
+        }
+        
+        /* Metrics values */
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #0891B2;
+            font-family: 'Figtree', sans-serif;
+        }
         </style>
     """, unsafe_allow_html=True)
 
 def main():
     inject_custom_css()
     
-    # Render Main Header
+    # Render Main Header using custom class
     st.markdown("""
         <div class="main-header">
-            <h1>🧬 Clinical Trial Randomization Engine</h1>
+            <h1>Clinical Trial Randomization Engine</h1>
             <p>Stratified Permuted Block Randomization (PBR) and Statistical Balance Verification</p>
         </div>
     """, unsafe_allow_html=True)
@@ -151,21 +255,21 @@ def main():
         st.session_state.last_randomization_params = {}
         
     # --- SIDEBAR: COHORT DATA SOURCE SETUP ---
-    st.sidebar.markdown("### 1. Data Ingestion")
+    st.sidebar.markdown("### Data Ingestion")
     
-    # Info note visible to user explaining demo/fallback behavior
+    # Info note visible to user explaining demo/fallback behavior without basic emojis
     st.sidebar.info(
-        "💡 **Notice:** If no custom CSV file is uploaded, the engine automatically defaults to using "
-        "`patients_raw.csv`. You can also generate a fresh synthetic cohort below."
+        "Notice: If no custom CSV file is uploaded, the engine automatically defaults to using "
+        "patients_raw.csv. You can also generate a fresh synthetic cohort below."
     )
     
     data_option = st.sidebar.radio(
         "Select Dataset Source:",
-        ["📝 Use Default Cohort (patients_raw.csv)", "📁 Upload Custom CSV File", "🧬 Generate Synthetic Cohort"]
+        ["Use Default Cohort (patients_raw.csv)", "Upload Custom CSV File", "Generate Synthetic Cohort"]
     )
     
     # Handle option 1: Default dataset
-    if data_option == "📝 Use Default Cohort (patients_raw.csv)":
+    if data_option == "Use Default Cohort (patients_raw.csv)":
         default_path = "patients_raw.csv"
         if os.path.exists(default_path):
             try:
@@ -175,15 +279,14 @@ def main():
                 st.sidebar.error(f"Error loading patients_raw.csv: {e}")
                 st.session_state.active_df = None
         else:
-            st.sidebar.warning("Default `patients_raw.csv` not found. Please upload a file or generate one.")
+            st.sidebar.warning("Default patients_raw.csv not found. Please upload a file or generate one.")
             st.session_state.active_df = None
             
     # Handle option 2: Custom CSV file upload
-    elif data_option == "📁 Upload Custom CSV File":
+    elif data_option == "Upload Custom CSV File":
         uploaded_file = st.sidebar.file_uploader("Upload Patient Cohort CSV", type=["csv"])
         if uploaded_file is not None:
             try:
-                # Read buffer
                 st.session_state.active_df = load_and_preprocess(uploaded_file)
                 st.session_state.data_source_name = f"Uploaded File ({uploaded_file.name})"
             except Exception as e:
@@ -202,18 +305,15 @@ def main():
                 st.session_state.active_df = None
                 
     # Handle option 3: Synthetic data generation
-    elif data_option == "🧬 Generate Synthetic Cohort":
+    elif data_option == "Generate Synthetic Cohort":
         st.sidebar.markdown("**Generator Configuration**")
         synth_n = st.sidebar.slider("Number of Patients (N):", min_value=50, max_value=500, value=150, step=10)
         synth_seed = st.sidebar.number_input("Generator Seed:", min_value=1, value=42)
-        save_disk = st.sidebar.checkbox("Save generated cohort to disk (`patients_raw.csv`)", value=False)
+        save_disk = st.sidebar.checkbox("Save generated cohort to disk (patients_raw.csv)", value=False)
         
         if st.sidebar.button("Generate & Load Synthetic Data", use_container_width=True):
             try:
                 synth_df = generate_synthetic_data(n_patients=synth_n, seed=synth_seed)
-                # Apply load_and_preprocess processing (e.g., bin age)
-                # We can write to a buffer to let load_and_preprocess run, or apply it directly
-                # Writing to StringIO buffer is cleanest
                 csv_buffer = io.StringIO()
                 synth_df.to_csv(csv_buffer, index=False)
                 csv_buffer.seek(0)
@@ -224,27 +324,24 @@ def main():
                 
                 if save_disk:
                     synth_df.to_csv("patients_raw.csv", index=False)
-                    st.sidebar.info("Saved to `patients_raw.csv` at project root.")
+                    st.sidebar.info("Saved to patients_raw.csv at project root.")
             except Exception as e:
                 st.sidebar.error(f"Failed to generate synthetic data: {e}")
                 st.session_state.active_df = None
                 
     # Check if we successfully loaded a dataframe
     if st.session_state.active_df is None:
-        st.warning("⚠️ Please load or generate a patient dataset to begin.")
+        custom_alert("alert", "Data Required", "Please load or generate a patient dataset to begin.", type="warning")
         return
         
     df = st.session_state.active_df
     
     # --- SIDEBAR: RANDOMIZATION PARAMETERS ---
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### 2. Randomization Config")
+    st.sidebar.markdown("### Randomization Config")
     
-    # Filter columns to list potential stratification variables
-    # Exclude unique identifiers like Patient_ID
     potential_strata = [col for col in df.columns if col not in ['Patient_ID', 'Allocation', 'stratum_key', 'Masked_Allocation_Token']]
     
-    # Default selection: Choose Sex and Age_Group if they exist
     default_selected = []
     if 'Sex' in potential_strata:
         default_selected.append('Sex')
@@ -287,16 +384,14 @@ def main():
     )
 
     # --- MAIN VIEW LAYOUT ---
-    
-    # Display details of active cohort
     st.markdown(f"#### Active Dataset: `{st.session_state.data_source_name}`")
     
-    # Create Tabs for layout
+    # Create Tabs for layout without emojis
     tab_overview, tab_allocation, tab_audit, tab_viz = st.tabs([
-        "📋 Cohort Overview & Pre-flight", 
-        "⚡ Randomization Assignment", 
-        "📊 Statistical Balance Audit", 
-        "📈 Covariate Distribution Charts"
+        "Cohort Overview & Pre-flight", 
+        "Randomization Assignment", 
+        "Statistical Balance Audit", 
+        "Covariate Distribution Charts"
     ])
     
     # Tab 1: Cohort Overview & Pre-flight
@@ -305,7 +400,7 @@ def main():
         
         with col_summary1:
             st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            st.markdown("### 📋 Cohort Dataset Profile")
+            heading_with_icon("database", "Cohort Dataset Profile", level=3)
             st.write(f"**Total Records:** {len(df)} patients")
             st.write(f"**Available Attributes:** {', '.join(df.columns.tolist())}")
             st.dataframe(df.head(10), use_container_width=True)
@@ -313,12 +408,11 @@ def main():
             
         with col_summary2:
             st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            st.markdown("### 🛡️ Pre-Flight Strata Validation")
+            heading_with_icon("shield", "Pre-Flight Strata Validation", level=3)
             
             if not strata_cols:
-                st.warning("⚠️ Please select at least one stratification variable to evaluate.")
+                custom_alert("alert", "Stratifier Needed", "Please select at least one stratification variable to evaluate.", type="warning")
             else:
-                # Calculate validation metrics
                 total_patients = len(df)
                 unique_strata_combinations = df[strata_cols].drop_duplicates()
                 k_strata = len(unique_strata_combinations)
@@ -345,10 +439,12 @@ def main():
                         f'Average density ({avg_patients_per_stratum:.2f}) is lower than the block size ({block_size}).',
                         unsafe_allow_html=True
                     )
-                    st.error(
-                        "🚨 **Strata Starvation Risk!** There are too few patients per stratum combination. "
-                        "Randomization will degrade to simple random allocation. It is highly recommended to "
-                        "reduce the number of stratification variables or expand your cohort."
+                    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                    custom_alert(
+                        "alert",
+                        "Strata Starvation Risk",
+                        "There are too few patients per stratum combination. Randomization will degrade to simple random allocation. It is highly recommended to reduce the number of stratification variables or expand your cohort.",
+                        type="danger"
                     )
                     is_safe = False
                 elif avg_patients_per_stratum < critical_threshold:
@@ -357,9 +453,12 @@ def main():
                         f'Density ({avg_patients_per_stratum:.2f}) is close to minimum limits.',
                         unsafe_allow_html=True
                     )
-                    st.warning(
-                        "⚠️ **Borderline Density.** Incomplete blocks at recruitment closure might cause "
-                        "minor imbalances in rare strata. Proceed with caution."
+                    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                    custom_alert(
+                        "alert",
+                        "Borderline Density",
+                        "Incomplete blocks at recruitment closure might cause minor imbalances in rare strata. Proceed with caution.",
+                        type="warning"
                     )
                 else:
                     st.markdown(
@@ -367,24 +466,34 @@ def main():
                         f'Density ({avg_patients_per_stratum:.2f}) is robust.',
                         unsafe_allow_html=True
                     )
-                    st.success("✅ **Stratification matrix is structurally sound and balanced!**")
+                    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                    custom_alert(
+                        "check",
+                        "Validation Successful",
+                        "Stratification matrix is structurally sound and balanced.",
+                        type="success"
+                    )
             st.markdown('</div>', unsafe_allow_html=True)
             
     # Tab 2: Randomization Assignment
     with tab_allocation:
         st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-        st.markdown("### ⚙️ Execute Randomization")
+        heading_with_icon("settings", "Execute Randomization", level=3)
         st.write("Clicking below will partition the cohort using stratified permuted block randomization.")
         
-        # Determine button state based on pre-flight validation
         run_allowed = True
         if strata_cols:
             avg_patients_per_stratum = len(df) / len(df[strata_cols].drop_duplicates())
             if avg_patients_per_stratum < block_size and not force_randomization:
                 run_allowed = False
-                st.info("🔒 Randomization is locked due to Strata Starvation risks. Use the sidebar bypass check to proceed.")
+                custom_alert(
+                    "info", 
+                    "Randomization Locked", 
+                    "Randomization is locked due to Strata Starvation risks. Use the sidebar bypass check to proceed.", 
+                    type="info"
+                )
                 
-        run_btn = st.button("🚀 Run Randomization Allocation", disabled=not run_allowed or not strata_cols, type="primary")
+        run_btn = st.button("Run Randomization Allocation", disabled=not run_allowed or not strata_cols, type="primary")
         
         if run_btn:
             with st.spinner("Executing sequence allocation..."):
@@ -402,7 +511,13 @@ def main():
                         'seed': seed,
                         'salt': salt
                     }
-                    st.success("🎉 Randomization sequence completed successfully!")
+                    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                    custom_alert(
+                        "check", 
+                        "Randomization Completed", 
+                        "Randomization sequence completed successfully. Visual summary reports and download files are now available below.", 
+                        type="success"
+                    )
                 except Exception as e:
                     st.error(f"Randomization error: {e}")
                     
@@ -430,7 +545,7 @@ def main():
             col_dl1, col_dl2 = st.columns(2)
             with col_dl1:
                 st.download_button(
-                    label="⬇️ Download Blinded Dataset (Clinicians)",
+                    label="Download Blinded Dataset (Clinicians)",
                     data=blinded_csv,
                     file_name="randomized_cohort_blinded.csv",
                     mime="text/csv",
@@ -440,7 +555,7 @@ def main():
                 
             with col_dl2:
                 st.download_button(
-                    label="⬇️ Download Audit-Trail Dataset (Data Managers)",
+                    label="Download Audit-Trail Dataset (Data Managers)",
                     data=audit_csv,
                     file_name="randomized_cohort_audit.csv",
                     mime="text/csv",
@@ -449,7 +564,7 @@ def main():
                 st.caption("Contains all raw data, stratum composite keys, raw allocations ('C'/'T'), and masked tokens for audit reproducibility.")
                 
             st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            st.markdown("### 🔍 Allocation Summary Metrics")
+            heading_with_icon("chart", "Allocation Summary Metrics", level=3)
             
             # Show summary stats of the allocation
             n_tot = len(df_rand)
@@ -467,34 +582,31 @@ def main():
             with col_m4:
                 st.markdown(f'**Balance Ratio (T/C)**<br><span class="metric-value">{bal_ratio:.3f}</span>', unsafe_allow_html=True)
                 
-            st.markdown("### 📋 Randomized Dataset Preview")
+            heading_with_icon("table", "Randomized Dataset Preview", level=3)
             st.dataframe(df_export.head(15), use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
     # Tab 3: Statistical Balance Audit
     with tab_audit:
         if st.session_state.df_randomized is None:
-            st.info("ℹ️ Run the randomization assignment on Tab 2 to view statistical balance audits.")
+            custom_alert("info", "Allocation Required", "Run the randomization assignment on Tab 2 to view statistical balance audits.", type="info")
         else:
             df_rand = st.session_state.df_randomized
             
             st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            st.markdown("### 📊 Statistical Verification Parity Report")
+            heading_with_icon("chart", "Statistical Verification Parity Report", level=3)
             st.write(
                 "Welch's Independent T-Test is performed on continuous variables, and Pearson's Chi-Square Test "
                 "is conducted on categorical covariates to verify balance. A p-value > 0.05 indicates no statistically "
                 "significant difference between the Control and Treatment groups (i.e. successful balance)."
             )
             
-            # Automatically classify continuous and categorical variables
             continuous_candidates = ['Age', 'BMI']
             categorical_candidates = ['Sex', 'Smoking', 'Obesity', 'Diabetes', 'Cancer', 'Cancer_Stage']
             
-            # Check which exist in df
             continuous_cols = [c for c in continuous_candidates if c in df_rand.columns]
             categorical_cols = [c for c in categorical_candidates if c in df_rand.columns]
             
-            # If not matching candidates, classify dynamically
             if not continuous_cols and not categorical_cols:
                 for col in df_rand.columns:
                     if col in ['Patient_ID', 'Allocation', 'stratum_key', 'Masked_Allocation_Token']:
@@ -508,7 +620,7 @@ def main():
             report = verify_balance(df_rand, continuous_cols, categorical_cols)
             
             # Render continuous table
-            st.markdown("#### 📐 Continuous Covariates (Welch's Independent T-Test)")
+            heading_with_icon("table", "Continuous Covariates (Welch's Independent T-Test)", level=4)
             if not report.get('continuous'):
                 st.write("*No continuous variables identified.*")
             else:
@@ -554,7 +666,7 @@ def main():
                 st.markdown(html_table, unsafe_allow_html=True)
                 
             # Render categorical table
-            st.markdown("#### 📊 Categorical Covariates (Pearson's Chi-Square Test)")
+            heading_with_icon("table", "Categorical Covariates (Pearson's Chi-Square Test)", level=4)
             if not report.get('categorical'):
                 st.write("*No categorical variables identified.*")
             else:
@@ -598,14 +710,13 @@ def main():
     # Tab 4: Visualizations
     with tab_viz:
         if st.session_state.df_randomized is None:
-            st.info("ℹ️ Run the randomization assignment on Tab 2 to view balance charts.")
+            custom_alert("info", "Allocation Required", "Run the randomization assignment on Tab 2 to view balance charts.", type="info")
         else:
             df_rand = st.session_state.df_randomized
             
             st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-            st.markdown("### 📊 Distribution of Covariates by Allocation Arm")
+            heading_with_icon("chart", "Distribution of Covariates by Allocation Arm", level=3)
             
-            # Select column to visualize
             plottable_cols = [c for c in df_rand.columns if c not in ['Patient_ID', 'Allocation', 'stratum_key', 'Masked_Allocation_Token']]
             
             selected_var = st.selectbox(
@@ -615,13 +726,12 @@ def main():
             
             if selected_var:
                 if pd.api.types.is_numeric_dtype(df_rand[selected_var]) and df_rand[selected_var].nunique() > 10:
-                    # Continuous variable: Render side-by-side boxplots
-                    st.markdown(f"#### Boxplot of `{selected_var}` per Treatment Arm")
+                    heading_with_icon("chart", f"Boxplot of {selected_var} per Treatment Arm", level=4)
                     
                     boxplot = alt.Chart(df_rand).mark_boxplot(extent='min-max', size=50).encode(
                         x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
                         y=alt.Y(f'{selected_var}:Q', title=selected_var),
-                        color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0d9488', '#6366f1']), title='Arm')
+                        color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm')
                     ).properties(
                         width=350,
                         height=400
@@ -632,10 +742,8 @@ def main():
                     st.altair_chart(boxplot, use_container_width=False)
                     
                 else:
-                    # Categorical variable: Render grouped column chart
-                    st.markdown(f"#### Distribution of `{selected_var}` per Treatment Arm")
+                    heading_with_icon("chart", f"Distribution of {selected_var} per Treatment Arm", level=4)
                     
-                    # Prepare counts and percentages
                     chart_data = df_rand.groupby([selected_var, 'Allocation']).size().reset_index(name='Count')
                     total_by_allocation = df_rand.groupby('Allocation').size().to_dict()
                     chart_data['Percentage'] = chart_data.apply(
@@ -645,7 +753,7 @@ def main():
                     bar_chart = alt.Chart(chart_data).mark_bar().encode(
                         x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
                         y=alt.Y('Percentage:Q', title='Percentage (%)'),
-                        color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0d9488', '#6366f1']), title='Arm'),
+                        color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm'),
                         column=alt.Column(f'{selected_var}:N', title=selected_var)
                     ).properties(
                         width=120,
