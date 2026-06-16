@@ -764,7 +764,14 @@ def main():
                     if pd.api.types.is_numeric_dtype(df_rand[selected_var]) and df_rand[selected_var].nunique() > 10:
                         heading_with_icon("chart", f"Boxplot of {formatted_var} per Treatment Arm", level=4)
                         
-                        boxplot = alt.Chart(df_rand).mark_boxplot(extent='min-max', size=50).encode(
+                        boxplot = alt.Chart(df_rand).mark_boxplot(
+                            extent='min-max',
+                            size=50,
+                            box={'stroke': '#94A3B8'},
+                            rule={'stroke': '#94A3B8'},
+                            ticks={'stroke': '#94A3B8'},
+                            median={'stroke': '#FFFFFF'}
+                        ).encode(
                             x=alt.X('Allocation:N', title='Allocation Arm', axis=alt.Axis(labelAngle=0)),
                             y=alt.Y(f'{selected_var}:Q', title=formatted_var),
                             color=alt.Color('Allocation:N', scale=alt.Scale(domain=['C', 'T'], range=['#0891B2', '#059669']), title='Arm')
