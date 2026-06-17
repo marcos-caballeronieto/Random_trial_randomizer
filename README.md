@@ -21,13 +21,35 @@ This tool mitigates selection bias by ensuring mathematical balance across criti
 ## ⚙️ Installation & Setup
 
 1. Clone the repository.
-2. Install the required dependencies:
+2. Setup and run automatically using the **Windows Batch File** (`run.bat`), or install dependencies manually:
    ```bash
    pip install -r requirements.txt
    ```
    *Dependencies include: `numpy>=2.0.0`, `pandas>=2.0.0`, `scipy>=1.10.0`, `streamlit>=1.30.0`.*
 
 ## 🚀 Usage Guide
+
+### ⚡ Windows Quick Start (Recommended)
+You can run the application directly by double-clicking the `run.bat` script in the root directory, or by executing it from your terminal:
+```cmd
+run.bat
+```
+This batch script will automatically:
+- Detect or create a virtual environment (`venv`).
+- Install/update necessary dependencies if needed.
+- Provide a menu to launch either the **Interactive Web UI (Streamlit)** or the **Command-Line Interface (CLI)**.
+
+### 🍎 macOS & Linux Quick Start
+You can run the interactive shell script `run.sh` from your terminal:
+1. Make the script executable (only needed the first time):
+   ```bash
+   chmod +x run.sh
+   ```
+2. Run the script:
+   ```bash
+   ./run.sh
+   ```
+This shell script provides the exact same automated setup and interactive menu options as the Windows version.
 
 ### 1. Interactive Web UI (Streamlit)
 Launch the interactive dashboard to upload cohorts, select variables visually, generate synthetic patients, and view statistical balance charts.
