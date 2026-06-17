@@ -10,6 +10,8 @@ This tool mitigates selection bias by ensuring mathematical balance across criti
 
 🚀 **Try the Live Interactive Demo:** [Experience the dashboard on Hugging Face Spaces](https://huggingface.co/spaces/marcoscaballero27/clinical-trial-randomizer)
 
+For a detailed analysis of the underlying clinical objectives and mathematical principles, see the [Project Scope & Theoretical Framework](Documentation/Project_Scope_and_Theoretical_Framework.md).
+
 ## ✨ Core Features
 
 * **Stratified Permuted Block Randomization:** Enforces a strict 1:1 allocation ratio using configurable block sizes. It uses deterministic execution via pseudorandom seeds (MT19937) for regulatory audit reproducibility.
@@ -84,6 +86,8 @@ python main.py --input patients_raw.csv --output randomized_cohort.csv --strata 
 * `--salt`: Cryptographic salt string for SHA-256 hashing (Default: `"trial_salt_2026"`)
 * `--force`: Bypass the pre-flight gatekeeper if Strata Starvation is detected.
 
+For a complete reference of command flags, execution scenarios, and output reports, see the [CLI Usage Guide](Documentation/CLI_Usage_Guide.md).
+
 ## 🧬 Clinical & Mathematical Architecture
 
 ### Default Stratification
@@ -91,3 +95,15 @@ By default, the engine enforces stratification on two fundamental biological cov
 
 ### Strata Starvation (Over-Stratification)
 Investigators should only introduce optional variables (like Diabetes or Smoking Status) if they are established, independent prognostic indicators. Adding too many variables fragments the cohort into too many strata. If the average patient density per stratum drops below the block size, the mathematical integrity of the permuted blocks degrades to simple unblocked randomization. The built-in validation gatekeeper prevents this from failing silently.
+
+For detailed clinical criteria and validation threshold definitions, see the [Clinical Stratification Guidelines & Validation Architecture](Documentation/Clinical_Stratification_Guideline_and_Validation_Architecture.md).
+
+---
+
+## 📚 Project Documentation
+
+Explore the detailed documentation files for in-depth information about this project:
+* **[Project Scope & Theoretical Framework](Documentation/Project_Scope_and_Theoretical_Framework.md):** Theoretical foundations, permuted block mechanics, Mersenne Twister PRNG determinism, and balance tests.
+* **[Clinical Stratification Guidelines](Documentation/Clinical_Stratification_Guideline_and_Validation_Architecture.md):** Clinical rationale for default covariates (Age, Sex), optional variable rules, and strata starvation validation logic.
+* **[CLI Usage Guide](Documentation/CLI_Usage_Guide.md):** Complete reference of CLI flags, runtime commands, and output data formats.
+* **[Project Roadmap](Documentation/roadmap.md):** Milestone tracking for phases of construction, testing, validation, CLI packaging, and streamlit interface creation.
