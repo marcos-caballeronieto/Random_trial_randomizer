@@ -8,6 +8,8 @@ In clinical research, the internal validity of an experiment relies heavily on t
 
 This tool mitigates selection bias by ensuring mathematical balance across critical prognostic covariates (such as Age and Biological Sex) between treatment and control arms. It guarantees mathematical balance while preserving the strict unpredictability required for true allocation concealment.
 
+🚀 **Try the Live Interactive Demo:** [Experience the dashboard on Hugging Face Spaces](https://huggingface.co/spaces/marcoscaballero27/clinical-trial-randomizer)
+
 ## ✨ Core Features
 
 * **Stratified Permuted Block Randomization:** Enforces a strict 1:1 allocation ratio using configurable block sizes. It uses deterministic execution via pseudorandom seeds (MT19937) for regulatory audit reproducibility.
@@ -51,14 +53,16 @@ You can run the interactive shell script `run.sh` from your terminal:
    ```
 This shell script provides the exact same automated setup and interactive menu options as the Windows version.
 
-### 1. Interactive Web UI (Streamlit)
+### 🛠️ Manual Setup
+
+#### 1. Interactive Web UI (Streamlit)
 Launch the interactive dashboard to upload cohorts, select variables visually, generate synthetic patients, and view statistical balance charts.
 
 ```bash
 streamlit run app.py
 ```
 
-### 2. Command-Line Interface (CLI)
+#### 2. Command-Line Interface (CLI)
 Run the engine directly from your terminal. 
 
 **Standard Baseline Stratification (Recommended Run):**
